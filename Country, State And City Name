@@ -1,1 +1,135 @@
 ****************************** How To Show Country State And City Name **********************************************
+
+
+Step : 1 Web File Code 
+
+Route::get('get-state/{id}', [HomeController::class, 'getState'])->name('get.state');
+Route::get('get-city/{id}', [HomeController::class, 'getCity'])->name('get.city');
+
+
+Step : 2 View File Code 
+
+ <div class="col-md-4" style="margin-top: 18px;" >
+    <label>Country<span class="text-danger">* </span></label>
+    <select name="country" id="country" class="form-control" required >
+        <option selected disabled  >--Select Country--</option>
+        @php $countrys = \App\Models\Country::all(); @endphp
+        @if($countrys->isNotEmpty())
+            @foreach($countrys as $country)
+            <option class="form-control" value="{{ $country->id }}"  >{{ $country->name ?? '' }}</option>
+            @endforeach
+        @endif
+    </select>
+</div>
+
+<div class="col-md-4" style="margin-top: 18px;" >
+    <label>State<span class="text-danger">* </span></label>
+    <select name="state" id="state" class="form-control" required >
+        <option selected disabled  >--Select State--</option>
+    </select>
+</div>
+
+<div class="col-md-4" style="margin-top: 18px;" >
+    <label>City <span class="text-danger">* </span></label>
+    <select name="city" id="city" class="form-control" required>
+        <option selected disabled>--Select City--</option>
+    </select>                 
+ </div>
+
+
+Step : 3 Script Code 
+
+<script>
+    $(document).ready(function(){
+        $("#country").on('change',function(){
+            var countryId = $(this).val();
+            console.log(countryId);
+
+            $.ajax({
+                url: "{{ url('get-state') }}/"+countryId,
+                method : "GET",
+
+                success:function(response){
+                    if(response){
+                        var dataString = JSON.stringify(response);
+                        console.log(dataString);
+
+                        var StatesDropdown = $('select[name="state"]');
+                        StatesDropdown.empty();
+                        StatesDropdown.append('<option selected disabled>--Select State--</option>');
+
+                        $.each(response, function(index, state) {
+                            StatesDropdown.append('<option value="' + state.id + '">' + state.name + '</option>');
+                        });
+
+                    }else{
+                        console.error("Empty response received.");
+                        alert("Empty response received.");
+                    }
+
+
+                },
+                error: function(xhr, status, error) {
+                    console.error('An error occurred:', error);
+                }
+
+            });
+
+
+        });
+
+        $("#state").on('change', function(){
+            var stateId = $(this).val();
+            console.log(stateId);
+
+            $.ajax({
+                url: "{{ url('get-city') }}/"+stateId,
+                method : "GET",
+
+                success:function(response){
+                    if(response){
+                        var dataString = JSON.stringify(response);
+                        console.log(dataString);
+
+                        var cityDropdown = $('select[name="city"]');
+                        cityDropdown.empty();
+                        cityDropdown.append('<option selected disabled>--Select City--</option>');
+
+                        $.each(response, function(index, city) {
+                            cityDropdown.append('<option value="' + city.id + '">' + city.name + '</option>');
+                        });
+
+                    }else{
+                        console.error("Empty response received.");
+                        alert("Empty response received.");
+                    }
+
+
+                },
+                error: function(xhr, status, error) {
+                    console.error('An error occurred:', error);
+                }
+
+            });
+
+
+        });
+    })
+</script>
+
+
+Step : 4 Controller Side Code 
+
+
+class HomeController extends Controller
+{
+    public function getState($id){
+        $states = State::where('country_id', $id)->get(['id', 'name']);
+        return response()->json($states);
+    }
+
+    public function getCity($id){
+        $states = City::where('state_id', $id)->get(['id', 'name']);
+        return response()->json($states);
+    }
+}
